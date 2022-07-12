@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>人员列表--layui后台管理模板 2.0</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote quoteBox">
+        <form class="layui-form">
+            <div class="layui-input-inline">
+                <select class="deptId" id="deptId" lay-search></select>
+            </div>
+            <div class="layui-input-inline">
+                <input id="name" placeholder="输入姓名" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-input-inline">
+                <input id="epc" placeholder="输入EPC号" autocomplete="off" class="layui-input" style="width: 200px;">
+            </div>
+
+            <div class="layui-inline">
+                <a class="layui-btn search_btn"><i class="layui-icon">&#xe615;</i>查询</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-primary downloadTemplete_btn"> <i
+                        class="layui-icon">&#xe656;</i>下载导入模板</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-normal importEmployee_btn"> <i class="layui-icon">&#xe67c;</i>批量导入</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-warm batchAdd_btn"> <i class="layui-icon">&#xe654;</i>新增</a>
+            </div>
+        </form>
+    </blockquote>
+    <table id="employeeList" lay-filter="employeeList" width="100%"></table>
+
+    <script type="text/html" id="employeeListBar">
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="edit"><i class="layui-icon">&#xe642;</i>编辑</a>
+        <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="resetPwd"><i class="layui-icon">&#xe642;</i>密码重置</a>
+        </script>
+
+    <script type="text/javascript" src="../../layui/layui.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script>
+        layui.use(['tree', 'form', 'layer', 'table', 'laytpl', 'upload'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laytpl = layui.laytpl,
+                table = layui.table,
+                tree = layui.tree,
+                upload = layui.upload;
+
+            window.employeeListTools = { func1: function () { $('.search_btn').click(); } };
+
+            //新增
+            $(".batchAdd_btn").on("click", function () {
+                openDialog(null, '新增人员', 'employeeAdd.html');
+            });
+
+            var userList = getSessionStorage("userList");
+            var deptList = getSessionStorage("deptList");
+
+            $(".deptId").append(renderSelectOptions(deptList, { valueField: "id", textField: "name", selectedValue: null }, "科室"));
+            form.render('select');
+
+            //下载模板
+            $(".downloadTemplete_btn").on("click", function () {
+                location.href = contextPath + "/file/downloadTemplate" + getAccessTokenUrl() + "&temp=user";
+            });
+
+            //批量导入
+            upload.render({
+                elem: '.importEmployee_btn'
+                , url: contextPath + '/sys/operate/uploadEmployeeExcel' + getAccessTokenUrl()
+                , data: {}
+                , size: 500                   //传输大小500k
+                , exts: 'xls'        //可传输文件的后缀
+                , accept: 'file'              //Excel files
+                , multiple: false
+                , done: function (res, index, upload) {
+                    if (res.code == 0) {
+                        layer.msg('批量导入成功:' + res.data.size + '条',
+                            { icon: 7, time: 1000, shade: [0.6, '#000', true] });
+                    } else {
+                        layer.alert(res.msg);
+                    }
+
+                    //刷新表格
+                    $('.search_btn').click();
+                }
+            });
+
+            //第一个实例
+            var tableIns = table.render({
+                elem: '#employeeList'
+                , url: contextPath + '/base/getUserList' + getAccessTokenUrl() //数据接口
+                , id: 'employeeListTable'
+                , page: true //开启分页
+                , height: "full-105"
+                , limit: 15
+                , limits: [10, 15, 20]
+                , even: true
+                , method: 'GET'   //laui 修改请求方式
+                , cellMinWidth: 95
+                , cols: [[ //表头
+                    { type: 'checkbox', fixed: 'left' }
+                    , { field: 'id', title: '编号', align: "center" }
+                    , {
+                        title: '所属科室', align: "center", width: 150, templet: function (d) {
+                            return renderItemName(deptList, d.deptId);
+                        }
+                    }
+                    , { field: 'name', title: '姓名', align: "center" }
+                    , { field: 'username', title: '用户名', align: "center" }
+                    , { field: 'code', title: 'IC卡号', width: 200, align: "center" }
+                    , { field: 'epc', title: 'EPC号', width: 250, align: "center" }
+                    , {
+                        title: '用户角色', align: "center", width: 250, templet: function (d) {
+
+                            if (d.roles == null) {
+                                return "无";
+                            }
+
+                            var str = "";
+                            var roles = d.roles.split(',');
+                            for (var i = 0; i < roles.length; i++) {
+                                if (roles[i] == "Configuration") {
+                                    str += ",设置中心";
+                                }
+                                else if (roles[i] == "GoodsManage") {
+                                    str += ",耗材管理";
+                                }
+                                else if (roles[i] == "DataQuery") {
+                                    str += ",数据查询";
+                                }
+                            }
+                           
+                            return str.substring(1);
+                        }
+                    }
+                    , {
+                        title: '状态', width: 150, align: 'center', templet: function (d) {
+                            var isChecked = d.enable == 'true' ? "checked" : ""; //启停状态赋初值
+                            return '<input type="checkbox" name="state" lay-filter="state" lay-skin="switch" lay-text="可用|不可用" ' + isChecked + ' id=' + d.id + '>'
+                        }
+                    }
+                    , { title: '操作', templet: '#employeeListBar', width: 200, fixed: "right", align: "center" }
+                ]]
+            });
+
+            //切换可用类型
+            form.on('switch(state)', function (data) {
+                var id = $(this).attr('id');
+                var enable = data.elem.checked ? 'true' : 'false';
+
+                var index = layer.load(2);
+                $.ajax({
+                    url: contextPath + '/base/updateState' + getAccessTokenUrl(),
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        type: 'user',
+                        id: id,
+                        enable: enable
+                    },
+                    success: function (data) {
+                        layer.close(index);
+                        if (data.code == 0) {
+                            layer.msg('状态切换成功', { icon: 7, time: 1000, shade: [0.6, '#000', true] });
+                        } else {
+                            layer.alert(data.msg);
+                        }
+
+                        //刷新表格
+                        $('.search_btn').click();
+                    }
+                });
+
+            })
+
+            //搜索
+            $(".search_btn").on("click", function () {
+                table.reload('employeeListTable', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        deptId: $('#deptId').val(),
+                        name: $('#name').val(),
+                        epc: $('#epc').val()
+                    }
+                });
+
+                return false;
+            });
+
+            //重置密码
+            function resetPwd(userId) {
+                $.ajax({
+                    url: contextPath + '/base/resetPwd' + getAccessTokenUrl(),
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        userId: userId
+                    },
+                    success: function (data) {
+                        if (data.code == 0) {
+                            layer.msg("密码重置成功！");
+                        } else {
+                            layer.alert(data.msg);
+                        }
+                    }
+                });
+            }
+
+            //监听工具条
+            table.on('tool(employeeList)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+                // debugger;
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+                switch (layEvent) {
+                    case 'edit':
+                        openDialog(data, '编辑人员', 'employeeAdd.html');
+                        break;
+                    case 'resetPwd':
+                        layer.confirm('确定重置账号【' + data.name + '】登录密码？', { icon: 3, title: '提示信息' }, function (index) {
+                            layer.close(index);
+                            resetPwd(data.id);
+                        });
+                        break;
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>

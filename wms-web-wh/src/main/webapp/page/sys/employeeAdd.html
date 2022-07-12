@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>编辑人员</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+	<form class="layui-form" style="width:80%;">
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">用户编号</label>
+			<div class="layui-input-block">
+				<input type="text" class="layui-input id" lay-verify="required" placeholder="请输入用户编号">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">姓名</label>
+			<div class="layui-input-block">
+				<input type="text" class="layui-input name" lay-verify="required" placeholder="请输入姓名">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">用户名</label>
+			<div class="layui-input-block">
+				<input type="text" class="layui-input username" placeholder="请输入用户名">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">所在科室</label>
+			<div class="layui-input-block">
+				<select class="deptId" lay-filter="deptId" lay-search>
+				</select>
+			</div>
+		</div>
+		
+		<div class="layui-form-item">
+			<label class="layui-form-label">用户角色</label>
+			<div class="layui-input-block">
+				<input type="checkbox" id="role" value="Configuration" title="设置中心">
+				<input type="checkbox" id="role" value="GoodsManage" title="普通操作员">
+				<input type="checkbox" id="role" value="DataQuery" title="数据查询">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit="" lay-filter="addEmployee">立即提交</button>
+				<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+			</div>
+		</div>
+	</form>
+	<script type="text/javascript" src="../../layui/layui.all.js"></script>
+	<script type="text/javascript" src="../../js/common.js"></script>
+
+	<script type="text/javascript">
+		layui.use(['form', 'layer', 'transfer'], function () {
+			var form = layui.form
+			layer = parent.layer === undefined ? layui.layer : top.layer,
+				transfer = layui.transfer,
+				$ = layui.jquery;
+
+			//将checke拼接为"value1,value2,value3"
+			function GetCheckboxValues(Name) {
+				var result = [];
+				$("[id='" + Name + "']:checkbox").each(function () {
+					if ($(this).is(":checked")) {
+						result.push($(this).attr("value"));
+					}
+				});
+				return result.join(",");
+			};
+
+			form.on("submit(addEmployee)", function (data) {
+				$.ajax({
+					url: contextPath + '/base/saveUser' + getAccessTokenUrl(),
+					type: 'post',
+					dataType: 'json',
+					data: {
+						id: $(".id").val(),
+						name: $(".name").val(),
+						username: $(".username").val(),
+						deptId: $(".deptId").val(),
+						roles: GetCheckboxValues('role'),
+					},
+					success: function (data) {
+						if (data.code == 0) {
+							layer.msg("人员信息保存成功！");
+							//刷新父页面
+							parent.employeeListTools.func1();
+
+							var index = parent.layer.getFrameIndex(window.name);
+							parent.layer.close(index);//关闭当前页
+						} else {
+							layer.alert(data.msg);
+						}
+					}
+				});
+				return false;
+			})
+
+			var deptList = getSessionStorage("deptList");
+
+			//初始化数据,提供父窗口调用
+			window.initData = function (edit) {
+				$(".deptId").append(renderSelectOptions(deptList, { valueField: "id", textField: "name", selectedValue: null }, "科室"));
+				form.render('select');
+
+				//表单赋初值
+				if (edit) {
+					$(".id").val(edit.id);
+					$(".name").val(edit.name);
+					$(".username").val(edit.username);
+					$(".deptId").val(edit.deptId);
+					
+					//用户编号禁止修改
+					$(".id").addClass('layui-disabled');
+
+					//初始化菜单权限
+					if (edit.roles) {
+						var roles = edit.roles.split(',');
+						for (var j = 0; j < roles.length; j++) {
+							var unitTypeCheckbox = $("input[id='role']");
+							for (var i = 0; i < unitTypeCheckbox.length; i++) {
+								if (unitTypeCheckbox[i].value == roles[j]) {
+									unitTypeCheckbox[i].checked = true;
+								}
+							}
+						}
+					}
+
+					form.render();
+				}
+			}
+
+
+		})
+	</script>
+</body>
+
+</html>

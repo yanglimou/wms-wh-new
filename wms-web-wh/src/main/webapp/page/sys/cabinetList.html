@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>柜体列表--layui后台管理模板 2.0</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote quoteBox">
+        <form class="layui-form">
+            <div class="layui-input-inline">
+                <select class="deptId" id="deptId" lay-search>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <input id="name" placeholder="输入名称" autocomplete="off" class="layui-input">
+            </div>
+
+            <div class="layui-inline">
+                <a class="layui-btn search_btn"><i class="layui-icon">&#xe615;</i>查询</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-primary downloadTemplate_btn"> <i
+                        class="layui-icon">&#xe656;</i>下载导入模板</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-normal importTemplate_btn"> <i class="layui-icon">&#xe67c;</i>批量导入</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-warm batchAdd_btn"> <i class="layui-icon">&#xe654;</i>新增</a>
+            </div>
+        </form>
+    </blockquote>
+    <table id="warehouseList" lay-filter="warehouseList" width="100%"></table>
+
+    <script type="text/html" id="warehouseListBar">
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="edit"><i class="layui-icon">&#xe642;</i>编辑</a>
+    </script>
+
+    <script type="text/javascript" src="../../layui/layui.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script>
+        layui.use(['tree', 'form', 'layer', 'table', 'laytpl', 'upload'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laytpl = layui.laytpl,
+                table = layui.table,
+                tree = layui.tree,
+                upload = layui.upload;
+
+            window.cabinetListTools = { func1: function () { $('.search_btn').click(); } };
+
+            //新增
+            $(".batchAdd_btn").on("click", function () {
+                openDialog(null, '新增柜体', 'cabinetAdd.html');
+            });
+
+            var userList = getSessionStorage("userList");
+            var deptList = getSessionStorage("deptList");
+
+            $(".deptId").append(renderSelectOptions(deptList, { valueField: "id", textField: "name", selectedValue: null }, "科室"));
+            form.render('select');
+
+            //第一个实例
+            var tableIns = table.render({
+                elem: '#warehouseList'
+                , url: contextPath + '/base/getCabinetList' + getAccessTokenUrl() //数据接口
+                , id: 'warehouseTable'
+                , page: true //开启分页
+                , height: "full-105"
+                , limit: 15
+                , limits: [10, 15, 20]
+                , even: true
+                , method: 'GET'   //laui 修改请求方式
+                , cellMinWidth: 95
+                , cols: [[ //表头
+                    { type: 'checkbox', fixed: 'left' }
+                    , {
+                        title: '所属科室', align: "center", width: 150, templet: function (d) {
+                            return renderItemName(deptList, d.deptId);
+                        }
+                    }
+                    , { field: 'name', title: '名称', align: "center" }
+                    , { field: 'code', title: '编号', width: 150, align: "center" }
+                    , { field: 'ip', title: 'IP地址', align: "center" }
+                    , { field: 'type', title: '柜体类型', align: "center" }
+                    , {
+                        title: '状态', width: 150, align: 'center', templet: function (d) {
+                            var isChecked = d.enable == 'true' ? "checked" : ""; //启停状态赋初值
+                            return '<input type="checkbox" name="state" lay-filter="state" lay-skin="switch" lay-text="可用|不可用" ' + isChecked + ' id=' + d.id + '>'
+                        }
+                    }
+                    , { title: '操作', templet: '#warehouseListBar', width: 100, fixed: "right", align: "center" }
+                ]]
+            });
+
+            //切换可用类型
+            form.on('switch(state)', function (data) {
+                var id = $(this).attr('id');
+                var enable = data.elem.checked ? 'true' : 'false';
+
+                var index = layer.load(2);
+                $.ajax({
+                    url: contextPath + '/base/updateState' + getAccessTokenUrl(),
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        type: 'cabinet',
+                        id: id,
+                        enable: enable
+                    },
+                    success: function (data) {
+                        layer.close(index);
+                        if (data.code == 0) {
+                            layer.msg('状态切换成功', { icon: 7, time: 1000, shade: [0.6, '#000', true] });
+                        } else {
+                            layer.alert(data.msg);
+                        }
+
+                        //刷新表格
+                        $('.search_btn').click();
+                    }
+                });
+
+            })
+
+            //搜索
+            $(".search_btn").on("click", function () {
+                table.reload('warehouseTable', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        deptId: $('#deptId').val(),
+                        name: $('#name').val()
+                    }
+                });
+
+                return false;
+            });
+
+            //下载模板
+            $(".downloadTemplate_btn").on("click", function () {
+                location.href = contextPath + "/file/downloadTemplate" + getAccessTokenUrl() + "&temp=cabinet";
+            });
+
+            //批量导入
+            upload.render({
+                elem: '.importTemplate_btn'
+                , url: contextPath + '/file/uploadCabinetList' + getAccessTokenUrl()
+                , data: {}
+                , size: 500                   //传输大小500k
+                , exts: 'xls'        //可传输文件的后缀
+                , accept: 'file'              //Excel files
+                , multiple: false
+                , done: function (res, index, upload) {
+                    if (res.code == 0) {
+                        layer.msg('批量导入成功:' + res.data.size + '条',
+                            { icon: 7, time: 1000, shade: [0.6, '#000', true] });
+                    } else {
+                        layer.alert(res.msg);
+                    }
+
+                    //刷新表格
+                    $('.search_btn').click();
+                }
+            });
+
+            //监听工具条
+            table.on('tool(warehouseList)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+                // debugger;
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+                switch (layEvent) {
+                    case 'edit':
+                        openDialog(data, '编辑柜体', 'cabinetAdd.html');
+                        break;
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>

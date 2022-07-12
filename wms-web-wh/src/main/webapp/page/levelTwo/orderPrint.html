@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>单据详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+    <style type="text/css">
+
+    </style>
+</head>
+
+<body class="childrenBody">
+
+    <div id="print-area" class="layui-col-md12 layui-col-xs12" style="text-align: center;font-weight:600;">
+        <div class="layui-main">
+            <label style="font-size: 30px;">南京市妇幼保健院出库单</label>
+        </div>
+
+        <table class="layui-table magt0" lay-skin="nob">
+            <colgroup>
+                <col>
+                <col>
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <td>出库单号：10298</td>
+                    <td><img id="barcode" /></td>
+                    <td>制单日期：2020-01-10</td>
+                </tr>
+                <tr>
+                    <td>出库仓库：设备科中心库</td>
+                    <td>收货科室：妇科十七区妇科（肿瘤/生殖道感</td>
+                    <td>单据总金额：84.00</td>
+                </tr>
+                <tr>
+                    <td>行数：4</td>
+                    <td>总包数：4</td>
+                    <td>Z：非</td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <table class="layui-table magt0">
+            <colgroup>
+                <col>
+                <col width="200">
+            </colgroup>
+            <tbody>
+                <tr>
+                    <td>序号</td>
+                    <td>耗材名称</td>
+                    <td>规格</td>
+                    <td>定数系数</td>
+                    <td>包数</td>
+                    <td>配送总数</td>
+                    <td>单位</td>
+                    <td>批号</td>
+                    <td>有效期</td>
+                    <td>单价</td>
+                    <td>总金额</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>输氧面罩</td>
+                    <td>1041</td>
+                    <td>1只/包</td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>只</td>
+                    <td>74H1800925</td>
+                    <td>2023-08-06</td>
+                    <td>21.0000</td>
+                    <td>21.00</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>输氧面罩</td>
+                    <td>1041</td>
+                    <td>1只/包</td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>只</td>
+                    <td>74H1800925</td>
+                    <td>2023-08-06</td>
+                    <td>21.0000</td>
+                    <td>21.00</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>输氧面罩</td>
+                    <td>1041</td>
+                    <td>1只/包</td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>只</td>
+                    <td>74H1800925</td>
+                    <td>2023-08-06</td>
+                    <td>21.0000</td>
+                    <td>21.00</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>输氧面罩</td>
+                    <td>1041</td>
+                    <td>1只/包</td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>只</td>
+                    <td>74H1800925</td>
+                    <td>2023-08-06</td>
+                    <td>21.0000</td>
+                    <td>21.00</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="layui-table magt0" lay-skin="nob">
+            <colgroup>
+                <col>
+                <col>
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <td>配送人（签字）：</td>
+                    <td>制单人：毕道锦</td>
+                    <td>签收人（签字）：</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <div class="layui-inline">
+            <a class="layui-btn layui-btn-normal print_btn"><i class="layui-icon">&#xe66e;</i>打印</a>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script type="text/javascript" src="../../js/JsBarcode.all.min.js"></script>
+
+    <!-- <script src="http://www.jq22.com/jquery/jquery-migrate-1.2.1.min.js"></script> -->
+    <script language="javascript" src="../../js/jquery-1.8.2.min.js"></script>
+    <script language="javascript" src="../../js/jquery.jqprint-0.3.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'laydate', 'table', 'laytpl', 'flow'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laydate = layui.laydate,
+                laytpl = layui.laytpl,
+                flow = layui.flow,
+                table = layui.table;
+
+            var barcode = document.getElementById('barcode'),
+                str = "10298",
+                options = {
+                    format: "CODE128",//选择要使用的条形码类型
+                    displayValue: false,//是否在条形码下方显示文字
+                    // fontSize: 20,//设置文本的大小
+                    // height: 100,//高度
+                    width: 10,//设置条之间的宽度
+                    margin: 0//设置条形码周围的空白边距
+                };
+            JsBarcode(barcode, str, options); //原生
+
+            $(".print_btn").on("click", function () {
+                $("#print-area").jqprint({
+                    debug: false,
+                    importCSS: true,
+                    printContainer: true,
+                    operaSupport: false
+                });
+            });
+        });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>医疗物资管理系统 v3.0</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="Access-Control-Allow-Origin" content="*">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="icon" href="favicon.ico">
+	<link rel="stylesheet" href="layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="css/index.css" media="all" />
+
+	<style>
+		.company {
+			color: #fff;
+			float: left;
+			line-height: 30px;
+			font-size: 18px;
+			padding: 0 25px;
+			text-align: center;
+			width: 150px;
+		}
+	</style>
+</head>
+
+<body class="main_body">
+	<div class="layui-layout layui-layout-admin">
+		<!-- 顶部 -->
+		<div class="layui-header header">
+			<div class="layui-main mag0">
+				<a href="#" class="logo">医疗物资管理系统</a>
+
+				<!-- 显示/隐藏菜单 -->
+				<a href="javascript:;" class="seraph hideMenu icon-caidan"></a>
+				<!-- 顶级菜单 -->
+				<ul class="layui-nav mobileTopLevelMenus" mobile>
+					<li class="layui-nav-item" data-menu="contentManagement">
+						<a href="javascript:;"><i class="seraph icon-caidan"></i><cite>顶部菜单栏</cite></a>
+						<dl class="layui-nav-child">
+							<dd class="layui-this levelOne" data-menu="levelOne"><a href="javascript:;"><i
+										class="layui-icon" data-icon="&#xe62d;">&#xe62d;</i><cite>制标管理</cite></a></dd>
+							<dd class="layui-this levelTwo" data-menu="levelTwo"><a href="javascript:;"><i
+										class="layui-icon" data-icon="&#xe62d;">&#xe62d;</i><cite>科室查询</cite></a></dd>
+							<dd class="layui-this sys" data-menu="sys"><a href="javascript:;"><i class="layui-icon"
+										data-icon="&#xe62d;">&#xe62d;</i><cite>系统管理</cite></a></dd>
+						</dl>
+					</li>
+				</ul>
+				<ul class="layui-nav topLevelMenus" pc>
+					<li class="layui-nav-item layui-this levelOne" data-menu="levelOne">
+						<a href="javascript:;"><i class="layui-icon layui-icon-app"></i><cite>制标管理</cite></a>
+					</li>
+					<li class="layui-nav-item layui-this levelTwo" data-menu="levelTwo">
+						<a href="javascript:;"><i class="layui-icon layui-icon-app"></i><cite>科室查询</cite></a>
+					</li>
+					<li class="layui-nav-item layui-this sys" data-menu="sys">
+						<a href="javascript:;"><i class="layui-icon layui-icon-app"></i><cite>系统管理</cite></a>
+					</li>
+				</ul>
+				<!-- 顶部右侧菜单 -->
+				<ul class="layui-nav top_menu">
+					<li class="layui-nav-item refreshSpd" pc>
+						<a href="javascript:;"><i class="layui-icon">&#xe669;</i><cite>SPD同步</cite></a>
+					</li>
+					<li class="layui-nav-item refreshDics" pc>
+						<a href="javascript:;"><i class="layui-icon">&#xe669;</i><cite>字典更新</cite></a>
+					</li>
+
+					<li class="layui-nav-item lockcms" pc>
+						<a href="javascript:;"><i class="seraph icon-lock"></i><cite>锁屏</cite></a>
+					</li>
+					<li class="layui-nav-item" id="userInfo">
+						<a href="javascript:;"><img src="images/face2.png" class="layui-nav-img userAvatar" width="35"
+								height="35"><cite class="adminName">管理员</cite></a>
+						<dl class="layui-nav-child">
+							<dd><a href="javascript:;" class="changePwd"><i
+										class="seraph icon-xiugai"></i><cite>修改密码</cite></a></dd>
+							<dd><a href="javascript:;" class="signOut"><i
+										class="seraph icon-tuichu"></i><cite>退出</cite></a></dd>
+						</dl>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<!-- 左侧导航 -->
+		<div class="layui-side layui-bg-black">
+			<div class="user-photo">
+				<a class="img" title="我的头像"><img src="images/logo.jpg" class="userAvatar"></a>
+				<p><span class="company">济源人民医院</span></p>
+			</div>
+
+			<!-- 搜索 -->
+			<!-- <div class="layui-form component">
+				<select name="search" id="search" lay-search lay-filter="searchPage">
+					<option value="">搜索页面或功能</option>
+					<option value="1">layer</option>
+					<option value="2">form</option>
+				</select>
+				<i class="layui-icon">&#xe615;</i>
+			</div> -->
+			<div class="navBar layui-side-scroll" id="navBar">
+				<ul class="layui-nav layui-nav-tree">
+					<li class="layui-nav-item layui-this">
+						<a href="javascript:;" data-url="page/dashboard.html"><i class="layui-icon"
+								data-icon=""></i><cite>系统主页面</cite></a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<!-- 右侧内容 -->
+		<div class="layui-body layui-form">
+			<div class="layui-tab mag0" lay-filter="bodyTab" id="top_tabs_box">
+				<ul class="layui-tab-title top_tab" id="top_tabs">
+					<li class="layui-this" lay-id=""><i class="layui-icon">&#xe68e;</i> <cite>系统主页面</cite></li>
+				</ul>
+				<ul class="layui-nav closeBox">
+					<li class="layui-nav-item">
+						<a href="javascript:;"><i class="layui-icon caozuo">&#xe643;</i> 页面操作</a>
+						<dl class="layui-nav-child">
+							<dd><a href="javascript:;" class="refresh refreshThis"><i class="layui-icon">&#x1002;</i>
+									刷新当前</a></dd>
+							<dd><a href="javascript:;" class="closePageOther"><i class="seraph icon-prohibit"></i>
+									关闭其他</a></dd>
+							<dd><a href="javascript:;" class="closePageAll"><i class="seraph icon-guanbi"></i> 关闭全部</a>
+							</dd>
+						</dl>
+					</li>
+				</ul>
+				<div class="layui-tab-content clildFrame">
+					<div class="layui-tab-item layui-show">
+						<iframe src="page/dashboard.html"></iframe>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 底部 -->
+		<div class="layui-footer footer">
+			<p><span>技术支持 © 南京铁三角科技有限公司</span>　　
+				<a onclick="contact()" class="layui-btn layui-btn-xs">v3.0</a>
+			</p>
+		</div>
+	</div>
+
+	<!-- 移动导航 -->
+	<div class="site-tree-mobile"><i class="layui-icon">&#xe602;</i></div>
+	<div class="site-mobile-shade"></div>
+
+	<script type="text/javascript" src="layui/layui.js"></script>
+	<script type="text/javascript" src="js/common.js"></script>
+	<script type="text/javascript" src="js/index.js"></script>
+	<script type="text/javascript" src="js/cache.js"></script>
+
+	<script>
+		layui.use(['form', 'layer', 'laydate', 'table', 'laytpl'], function () {
+			var form = layui.form,
+				layer = parent.layer === undefined ? layui.layer : top.layer,
+				$ = layui.jquery,
+				laydate = layui.laydate,
+				laytpl = layui.laytpl,
+				table = layui.table;
+
+			//用户退出
+			$(".signOut").click(function () {
+				$.ajax({
+					url: contextPath + '/logout' + getAccessTokenUrl(),
+					type: 'post',
+					dataType: 'json',
+					data: {},
+					success: function (data) {
+						if (data.code == 0) {
+						} else {
+							layer.alert(data.msg);
+						}
+					}
+				});
+
+				//清除session缓存，返回登录页面
+				window.sessionStorage.clear();
+				location.href = "login.html";
+			})
+
+			//修改密码
+			$(".changePwd").click(function () {
+				var data = getCurrentEmployee();
+				openDialogByArea(data, '修改密码', 'page/sys/changePwd.html', '500px', '400px');
+			})
+
+			//刷新字典
+			$(".refreshDics").on("click", function () {
+				var index = layer.load(2);
+				$.ajax({
+					url: contextPath + '/sys/getInitData' + getAccessTokenUrl(),
+					type: 'get',
+					dataType: 'json',
+					data: {},
+					success: function (data) {
+					 	layer.close(index);
+						if (data.code == 0) {
+							layer.msg("字典刷新成功");
+
+							var wmsInitData = data.data;
+							window.sessionStorage.setItem("deptList", JSON.stringify(wmsInitData.deptList));
+							window.sessionStorage.setItem("cabinetList", JSON.stringify(wmsInitData.cabinetList));
+							window.sessionStorage.setItem("userList", JSON.stringify(wmsInitData.userList));
+							window.sessionStorage.setItem("goodsList", JSON.stringify(wmsInitData.goodsList));
+							window.sessionStorage.setItem("manufacturerList", JSON.stringify(wmsInitData.manufacturerList));
+							window.sessionStorage.setItem("supplierList", JSON.stringify(wmsInitData.supplierList));
+
+						} else {
+							layer.alert(data.msg);
+						}
+					}
+				});
+			})
+
+			//SPD数据同步
+			$(".refreshSpd").on("click", function () {
+				var index = layer.load(2, {
+					content: '同步中',
+					success: function (layero) {
+						layero.find('.layui-layer-content').css({
+							'paddingTop': '40px',
+							'width': '60px',
+							'textAlign': 'center',
+							'backgroundPositionX': 'center'
+						});
+					}
+				});
+				$.ajax({
+					url: contextPath + '/sys/getSpdData' + getAccessTokenUrl(),
+					type: 'get',
+					dataType: 'json',
+					data: {},
+					success: function (data) {
+						layer.close(index);
+						if (data.code == 0) {
+							layer.msg("SPD数据同步成功");
+						} else {
+							layer.alert(data.msg);
+						}
+					}
+				});
+			})
+
+		});
+
+	</script>
+</body>
+
+</html>

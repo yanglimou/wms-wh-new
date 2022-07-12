@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>数据看板</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../css/public.css" media="all" />
+
+    <style type="text/css">
+        .dashboard {
+            background: white;
+            border-radius: 5px;
+        }
+
+        .total {
+            font-size: 36px;
+            color: #666;
+            line-height: 36px;
+            padding: 5px 0 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-all;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .unit {
+            font-size: 24px;
+            color: #666;
+            line-height: 36px;
+            padding: 5px 0 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-all;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .caption {
+            font-size: 14px;
+            color: #666;
+            line-height: 14px;
+            padding: 5px 0 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-all;
+            white-space: nowrap;
+        }
+
+        .caption span {
+            margin-right: 20px;
+        }
+    </style>
+</head>
+
+<body class="childrenBody" style="background:rgb(242, 242, 242)">
+    <div style="padding: 10px;">
+
+        <blockquote class="layui-elem-quote layui-bg-white">
+            <div id="nowTime"></div>
+        </blockquote>
+
+        <!-- 数量统计区 -->
+        <div class="layui-row layui-col-space15">
+            <div class="aa layui-col-md2">
+                <a href="javascript:;" data-url="page/sys/warehouseList.html">
+                    <div class="layui-card dashboard">
+                        <div class="layui-card-header"><i class="layui-icon" style="color: #4E9FFF;">&#xe672;</i>科室数量汇总
+                        </div>
+                        <div class="layui-card-body" id="area1">
+                        </div>
+                    </div>
+                    <cite class="layui-hide">科室管理</cite>
+                </a>
+            </div>
+            <div class="aa layui-col-md2">
+                <a href="javascript:;" data-url="page/sys/employeeList.html">
+                    <div class="layui-card dashboard">
+                        <div class="layui-card-header"><i class="layui-icon" style="color: #900078;">&#xe672;</i>人员数量汇总
+                        </div>
+                        <div class="layui-card-body" id="area2">
+                        </div>
+                    </div>
+                    <cite class="layui-hide">人员管理</cite>
+                </a>
+            </div>
+            <div class="aa layui-col-md2">
+                <a href="javascript:;" data-url="page/sys/cabinetList.html">
+                    <div class="layui-card dashboard">
+                        <div class="layui-card-header"><i class="layui-icon" style="color: #537222;">&#xe672;</i>柜体数量汇总
+                        </div>
+                        <div class="layui-card-body" id="area3">
+                        </div>
+                    </div>
+                    <cite class="layui-hide">柜体管理</cite>
+                </a>
+            </div>
+            <div class="aa layui-col-md2">
+                <a href="javascript:;" data-url="page/sys/manufacturerList.html">
+                    <div class="layui-card dashboard">
+                        <div class="layui-card-header"><i class="layui-icon" style="color: #ffa963;">&#xe672;</i>生产商数量汇总
+                        </div>
+                        <div class="layui-card-body" id="area4">
+                        </div>
+                    </div>
+                    <cite class="layui-hide">生产商管理</cite>
+                </a>
+            </div>
+            <div class="aa layui-col-md2">
+                <a href="javascript:;" data-url="page/sys/supplierList.html">
+                    <div class="layui-card dashboard">
+                        <div class="layui-card-header"><i class="layui-icon" style="color: #4bff1e;">&#xe672;</i>供应商数量汇总
+                        </div>
+                        <div class="layui-card-body" id="area5">
+                        </div>
+                    </div>
+                    <cite class="layui-hide">供应商管理</cite>
+                </a>
+            </div>
+            <div class="aa layui-col-md2">
+                <a href="javascript:;" data-url="page/sys/productList.html">
+                    <div class="layui-card dashboard">
+                        <div class="layui-card-header"><i class="layui-icon" style="color: #465866;">&#xe672;</i>耗材数量汇总
+                        </div>
+                        <div class="layui-card-body" id="area6">
+                        </div>
+                    </div>
+                    <cite class="layui-hide">耗材管理</cite>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- 一级库数据统计区 -->
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md7">
+                <div class="layui-card dashboard">
+                    <div class="layui-card-header">耗材出入库统计
+                        <div class="layui-btn-group layuiadmin-btn-group layui-layout-right" style="margin-right: 20px">
+                            <button class="layui-btn layui-btn-xs lastMonth">上月</button>
+                            <button class="layui-btn layui-btn-xs currentMonth">本月</button>
+                        </div>
+                    </div>
+                    <div class="layui-card-body">
+                        <div id="chart4" style="width:100%;height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md5">
+                <div class="layui-card dashboard">
+                    <div class="layui-card-header">耗材领用统计
+                        <div class="layui-btn-group layuiadmin-btn-group layui-layout-right" style="margin-right: 20px">
+                            <button class="layui-btn layui-btn-xs lastMonth">上月</button>
+                            <button class="layui-btn layui-btn-xs currentMonth">本月</button>
+                        </div>
+                    </div>
+                    <div class="layui-card-body">
+                        <div id="chart5" style="width:100%;height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md12">
+                <blockquote class="layui-elem-quote title">系统基本参数</blockquote>
+                <table class="layui-table magt0">
+                    <colgroup>
+                        <col width="150">
+                        <col>
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td>医院名称</td>
+                            <td class="hospitalname"></td>
+                        </tr>
+                        <tr>
+                            <td>医院英文名称</td>
+                            <td class="hospitalenglishName"></td>
+                        </tr>
+<!--                        <tr>-->
+<!--                            <td>医院代码</td>-->
+<!--                            <td class="hospitalcode"></td>-->
+<!--                        </tr>-->
+                        <tr>
+                            <td>医院地址</td>
+                            <td class="hospitallocation"></td>
+                        </tr>
+                        <tr>
+                            <td>医院邮编</td>
+                            <td class="hospitalpostcode"></td>
+                        </tr>
+                        <tr>
+                            <td>高值柜登录方式</td>
+                            <td class="cabinetlogin"></td>
+                        </tr>
+                        <tr>
+                            <td>高值柜屏保时间</td>
+                            <td class="cabinetlockByMinute"></td>
+                        </tr>
+                        <tr>
+                            <td>高值柜近效期</td>
+                            <td class="cabinetexpireBeforeMonth"></td>
+                        </tr>
+                        <tr>
+                            <td>密码长度</td>
+                            <td class="passwordlength"></td>
+                        </tr>
+                        <tr>
+                            <td>密码有效期</td>
+                            <td class="passwordvalidByMonth"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="../layui/layui.all.js"></script>
+    <script type="text/javascript" src="../js/echarts.min.js"></script>
+    <script type="text/javascript" src="../js/common.js"></script>
+    <script type="text/javascript">
+
+        layui.use(['element', 'layer', 'table', 'util'], function () {
+            var element = layui.element,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                table = layui.table,
+                util = layui.util,
+                $ = layui.jquery;
+
+            $(".aa a").click(function () {
+                var employee = getCurrentEmployee();
+                if (employee != null && employee.roles.indexOf("Configuration") != -1) {
+                    parent.addTab($(this));
+                }
+            })
+
+            //固定块，滚动到顶部
+            util.fixbar();
+
+            //请求统计数据
+            function loadStatistic() {
+
+                //加载统计数据
+                function loadStatistic(data, id) {
+                    var html = "";
+                    html += '<p class="total">' + data.total + '<span class="unit">' + data.unit + '</span>' + '</p>'
+                        + '<p class="caption">' + data.capation + '</p>';
+
+                    $("#" + id).html(html);
+                }
+
+                $.ajax({
+                    url: contextPath + '/sys/getDashboardList' + getAccessTokenUrl(),
+                    type: 'get',
+                    dataType: 'json',
+                    data: {},
+                    success: function (data) {
+                        if (data.code == 0) {
+                            var totalStatistics = data.data.totalStatistics;
+
+                            var data1 = { total: totalStatistics.deptQuantity, unit: '（个）', capation: 'SPD提供数据' };
+                            var data2 = { total: totalStatistics.userQuantity, unit: '（人）', capation: 'SPD提供数据' };
+                            var data3 = { total: totalStatistics.cabinetQuantity, unit: '（个）', capation: 'SPD提供数据' };
+                            var data4 = { total: totalStatistics.manufacturerQuantity, unit: '（个）', capation: 'SPD提供数据' };
+                            var data5 = { total: totalStatistics.supplierQuantity, unit: '（个）', capation: 'SPD提供数据' };
+                            var data6 = { total: totalStatistics.goodsQuantity, unit: '（种）', capation: 'SPD提供数据' };
+
+                            loadStatistic(data1, 'area1');
+                            loadStatistic(data2, 'area2');
+                            loadStatistic(data3, 'area3');
+                            loadStatistic(data4, 'area4');
+                            loadStatistic(data5, 'area5');
+                            loadStatistic(data6, 'area6');
+                        } else {
+                            layer.alert(data.msg);
+                        }
+                    }
+                });
+
+            }
+
+            function loadDashboard(type) {
+
+                function generateChart(data) {
+                    var myChart4 = echarts.init(document.getElementById('chart4'));
+                    var myChart5 = echarts.init(document.getElementById('chart5'));
+
+                    var option4 = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'cross',
+                                label: {
+                                    backgroundColor: '#6a7985'
+                                }
+                            }
+                        },
+                        legend: {
+                            data: ["制标", '收货', '领取', '退还']
+                        },
+                        toolbox: {
+                            show: false,
+                            feature: {
+                                mark: { show: true },
+                                dataView: { show: true, readOnly: false },
+                                magicType: { show: true, type: ['line', 'bar'] },
+                                restore: { show: true },
+                                saveAsImage: { show: true }
+                            }
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        calculable: true,
+                        xAxis: [
+                            {
+                                type: 'category',
+                                boundaryGap: false,
+                                data: data.data.xAxisList
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value'
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '制标',
+                                type: 'line',
+                                // stack: '总量',
+                                areaStyle: {},
+                                data: data.data.tagQuantityList,
+                                itemStyle: { normal: { color: '#CD5C5C' } },
+                            },
+                            {
+                                name: '收货',
+                                type: 'line',
+                                // stack: '总量',
+                                areaStyle: {},
+                                data: data.data.tagInRecordQuantityList,
+                                itemStyle: { normal: { color: '#63B8FF' } },
+                            },
+                            {
+                                name: '领取',
+                                type: 'line',
+                                // stack: '总量',
+                                areaStyle: {},
+                                data: data.data.tagOutRecordQuantityList,
+                                itemStyle: { normal: { color: '#7CCD7C' } },
+                            },
+                            {
+                                name: '退还',
+                                type: 'line',
+                                // stack: '总量',
+                                areaStyle: {},
+                                data: data.data.tagReturnRecordQuantityList,
+                                itemStyle: { normal: { color: '#7ECAC3' } },
+                            }
+                        ]
+                    };
+
+                    var option5 = {
+                        // title: {
+                        //     text: '耗材领用分布',
+                        //     x: 'left'
+                        // },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: "{b} : {c} ({d}%)"
+                        },
+                        color: ['#CD5C5C', '#00CED1', '#9ACD32', '#FFC0CB'],
+                        graphic: {       //图形中间文字
+                            type: "text",
+                            left: "center",
+                            top: "center",
+                            style: {
+                                text: data.data.totalCount,
+                                textAlign: "center",
+                                fill: "#006400",
+                                fontSize: 40
+                            }
+                        },
+                        stillShowZeroSum: false,
+                        series: [
+                            {
+                                name: '',
+                                type: 'pie',
+                                radius: ['30%', '60%'],
+                                // center: ['60%', '60%'],
+                                data: data.data.kvList,
+                                itemStyle: {
+                                    emphasis: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(128, 128, 128, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+
+                    myChart4.setOption(option4);
+                    myChart5.setOption(option5);
+
+                    setTimeout(function () {
+                        window.onresize = function () {
+                            myChart4.resize();
+                            myChart5.resize();
+                        }
+                    }, 200)
+                }
+
+                $.ajax({
+                    url: contextPath + '/com/getTagRecordChartsData' + getAccessTokenUrl(),
+                    type: 'get',
+                    dataType: 'json',
+                    data: { type: type },
+                    success: function (data) {
+                        if (data.code == 0) {
+                            generateChart(data);
+                        }
+                    }
+                });
+            }
+
+            function fillParameter() {
+
+                //填充数据方法
+                function fillParameter(data) {
+                    //判断字段数据是否存在
+                    function nullData(data) {
+                        if (data == '' || data == "undefined") {
+                            return "未定义";
+                        } else {
+                            return data;
+                        }
+                    }
+
+                    $(".hospitalname").text(nullData(data.hospitalname));      //医院名称
+                    $(".hospitalenglishName").text(nullData(data.hospitalenglishName));        //医院英文名称
+                   // $(".hospitalcode").text(nullData(data.hospitalcode));    //医院代码
+                    $(".hospitallocation").text(nullData(data.hospitallocation));        //医院地址
+                    $(".hospitalpostcode").text(nullData(data.hospitalpostcode));    //医院邮编
+
+                    $(".cabinetlogin").text(nullData(data.cabinetlogin));    //高值柜登录方式
+                    $(".cabinetlockByMinute").text(nullData(data.cabinetlockByMinute) + ' 分钟');//高值柜屏保时间
+                    $(".cabinetexpireBeforeMonth").text(nullData(data.cabinetexpireBeforeMonth) + ' 个月');    //高值柜近效期
+
+                    $(".passwordlength").text(nullData(data.passwordlength) + ' 位');//密码长度
+                    $(".passwordvalidByMonth").text(nullData(data.passwordvalidByMonth) + ' 个月');    //密码有效期
+                }
+
+                $.ajax({
+                    url: contextPath + '/sys/getConfigData' + getAccessTokenUrl(),
+                    type: 'get',
+                    dataType: 'json',
+                    data: {},
+                    success: function (data) {
+                        if (data.code == 0) {
+                            fillParameter(data.data);
+                        }
+                    }
+                });
+            }
+
+            //上月统计
+            $(".lastMonth").on("click", function () {
+                $(".lastMonth").removeClass('layui-btn-primary');
+                $(".currentMonth").addClass('layui-btn-primary');
+                loadDashboard('lastMonth');
+            });
+
+            //本月统计
+            $(".currentMonth").on("click", function () {
+                $(".lastMonth").addClass('layui-btn-primary');
+                $(".currentMonth").removeClass('layui-btn-primary');
+                loadDashboard('currentMonth');
+            });
+
+            $(".currentMonth").click();
+
+            //获取系统时间
+            var newDate = '';
+            getLangDate();
+            //值小于10时，在前面补0
+            function dateFilter(date) {
+                if (date < 10) { return "0" + date; }
+                return date;
+            }
+            function getLangDate() {
+                var dateObj = new Date(); //表示当前系统时间的Date对象
+                var year = dateObj.getFullYear(); //当前系统时间的完整年份值
+                var month = dateObj.getMonth() + 1; //当前系统时间的月份值
+                var date = dateObj.getDate(); //当前系统时间的月份中的日
+                var day = dateObj.getDay(); //当前系统时间中的星期值
+                var weeks = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+                var week = weeks[day]; //根据星期值，从数组中获取对应的星期字符串
+                var hour = dateObj.getHours(); //当前系统时间的小时值
+                var minute = dateObj.getMinutes(); //当前系统时间的分钟值
+                var second = dateObj.getSeconds(); //当前系统时间的秒钟值
+                var timeValue = "" + ((hour >= 12) ? (hour >= 18) ? "晚上" : "下午" : "上午"); //当前时间属于上午、晚上还是下午
+                newDate = dateFilter(year) + "年" + dateFilter(month) + "月" + dateFilter(date) + "日 " + " " + dateFilter(hour) + ":" + dateFilter(minute) + ":" + dateFilter(second);
+                document.getElementById("nowTime").innerHTML = timeValue + "好！ 欢迎使用医疗物资管理系统。当前时间为： " + newDate + "　" + week;
+
+                setTimeout(() => {
+                    getLangDate();
+                }, 1000);
+            }
+
+            //加载数据
+            loadStatistic();
+            fillParameter();
+        })
+    </script>
+</body>
+
+</html>

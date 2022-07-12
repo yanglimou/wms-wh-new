@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>新增人员</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+	<form class="layui-form layui-form-pane" style="width:100%;">
+
+		<div class="layui-col-md12 layui-col-xs12">
+			<div class="layui-form-item" pane>
+				<label class="layui-form-label">方法名称</label>
+				<div class="layui-input-block">
+					<input type="text" class="layui-input module">
+				</div>
+			</div>
+			<div class="layui-form-item" pane>
+				<label class="layui-form-label">访问路径</label>
+				<div class="layui-input-block">
+					<input type="text" class="layui-input url">
+				</div>
+			</div>
+			<div class="layui-form-item" pane>
+				<label class="layui-form-label">请求方式</label>
+				<div class="layui-input-block">
+					<input type="text" class="layui-input method">
+				</div>
+			</div>
+			<div class="layui-form-item" pane>
+				<label class="layui-form-label">操作时间</label>
+				<div class="layui-input-block">
+					<input type="text" class="layui-input createDate">
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">参数</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea parameter"></textarea>
+				</div>
+			</div>
+			<div class="layui-form-item layui-form-text">
+				<label class="layui-form-label">异常信息</label>
+				<div class="layui-input-block">
+					<textarea class="layui-textarea errorMessage"></textarea>
+				</div>
+			</div>
+		</div>
+	</form>
+	<script type="text/javascript" src="../../layui/layui.all.js"></script>
+	<script type="text/javascript" src="../../js/common.js"></script>
+
+	<script type="text/javascript">
+		layui.use(['form', 'layer'], function () {
+			var form = layui.form
+			layer = parent.layer === undefined ? layui.layer : top.layer,
+				$ = layui.jquery;
+
+			var employeeList = getSessionStorage("employeeList");
+
+			//初始化数据,提供父窗口调用
+			window.initData = function (edit) {
+
+				//表单赋初值
+				if (edit) {
+					$(".module").val(edit.module);
+					$(".url").val(edit.url);
+					$(".method").val(edit.method);
+					$(".createDate").val(edit.createDate);
+					$(".parameter").val(edit.parameter);
+					$(".errorMessage").val(edit.errorMessage);
+					form.render();
+				}
+			}
+		})
+	</script>
+</body>
+
+</html>

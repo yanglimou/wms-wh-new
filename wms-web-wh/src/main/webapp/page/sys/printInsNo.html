@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>入库单打印</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all"/>
+    <link rel="stylesheet" href="../../css/public.css" media="all"/>
+</head>
+
+<body class="childrenBody">
+<blockquote class="layui-elem-quote quoteBox">
+    <form class="layui-form">
+        <div class="layui-input-inline">
+            <select class="printId" id="printId">
+            </select>
+        </div>
+        <!--        <div class="layui-input-inline">-->
+        <!--            <select class="low" id="low">-->
+        <!--            </select>-->
+        <!--        </div>-->
+        <div class="layui-input-inline">
+            <a class="layui-btn search_btn" data-type="reload" id="print"><i class="layui-icon">&#xe66d;</i>打印</a>
+            <a class="layui-btn search_btn" data-type="refresh" id="refresh"><i class="layui-icon">&#xe669;</i>刷新打印机</a>
+        </div>
+    </form>
+</blockquote>
+
+<table id="printList" lay-filter="printList"></table>
+
+
+<script type="text/javascript" src="../../layui/layui.js"></script>
+<script type="text/javascript" src="../../js/common.js"></script>
+<script>
+        layui.use(['form', 'layer', 'upload', 'laydate', 'element', 'table', 'laytpl'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laydate = layui.laydate,
+                laytpl = layui.laytpl,
+                element = layui.element,
+                upload = layui.upload,
+                table = layui.table;
+
+                function freshSelect(){
+                    $.ajax({
+                        url: contextPath + '/print/getPrinter' + getAccessTokenUrl(),
+                        type: 'get',
+                        dataType: 'json',
+                        success: function (data) {
+                            if (data.code == 0) {
+                            console.log(data)
+                                $("#printId").html(renderSelectOptions(data.data, { valueField: "id", textField: "name", selectedValue: null }, "打印机"));
+                                form.render('select');
+                            }
+                        }
+                    });
+                }
+
+                freshSelect()
+
+
+            //搜索
+            $("#refresh").on("click", function () {
+                freshSelect()
+            })
+
+
+            //搜索
+            $("#print").on("click", function () {
+                var status=table.checkStatus("printTable")
+                console.log(status)
+                if(status.data.length==0){
+                    layer.msg('请选择要打印的数据');
+                    return;
+                }
+                var printId=$("#printId").val();
+                if(!printId){
+                    layer.msg('请选择打印机');
+                    return;
+                }
+
+                var data={
+                    insNo:status.data[0].insNo,
+                    printId:printId,
+                }
+                console.log(data);
+                $.ajax({
+                    url: contextPath + '/print/doPrint2' + getAccessTokenUrl(),
+                    type: 'post',
+                    data: data,
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.code == 0) {
+                            table.reload('printTable')
+                            layer.msg("发送打印消息成功")
+                        }else{
+                            layer.msg("打印失败")
+                        }
+                    }
+                });
+            });
+
+
+
+            //系统列表
+            var tableIns3 = table.render({
+                elem: '#printList'
+                , url: contextPath + '/print/getPrintList2' + getAccessTokenUrl()//数据接口
+                , id: 'printTable'
+                , page: true //开启分页
+                , height: "full-105"
+                , limit: 15
+                , limits: [10, 15, 20]
+                , even: true
+                , method: 'GET'   //laui 修改请求方式  
+                , cellMinWidth: 80 //最小宽度         
+                , cols: [[ //表头        
+                    { type: 'radio', fixed: 'left', align: "center" }
+                    , { field: 'insNo', title: 'spd制标单号', width: 200, align: "center" }
+                    , { field: 'num', title: '制标数据条数', width: 150, align: "center" }
+                    , { field: 'printNum', title: '已打印', width: 150, align: "center",templet:"<div>{{d.printNum==d.num?'是':'否'}}</div>" }
+
+                ]]
+            });
+
+
+
+        });
+
+
+
+
+
+
+</script>
+</body>
+
+</html>

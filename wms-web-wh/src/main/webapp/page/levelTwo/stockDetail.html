@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>单据详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote quoteBox">
+        <div class="layui-input-inline">
+            <label class="layui-form-label">科室名称</label>
+        </div>
+        <div class="layui-input-inline">
+            <input class="layui-input deptName">
+        </div>
+        <div class="layui-input-inline">
+            <label class="layui-form-label">耗材名称</label>
+        </div>
+        <div class="layui-input-inline">
+            <input class="layui-input goodsName">
+        </div>
+        <div class="layui-input-inline">
+            <label class="layui-form-label">耗材规格</label>
+        </div>
+        <div class="layui-input-inline">
+            <input class="layui-input goodsSpec">
+        </div>
+    </blockquote>
+
+    <table id="stockRecordList" lay-filter="stockRecordList" width="100%"></table>
+
+    <script type="text/javascript" src="../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'laydate', 'table', 'laytpl', 'flow'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laydate = layui.laydate,
+                laytpl = layui.laytpl,
+                flow = layui.flow,
+                table = layui.table;
+
+            //初始化数据,提供父窗口调用
+            window.initData = function (edit) {
+
+                var deptList = getSessionStorage("deptList");
+                var cabinetList = getSessionStorage("cabinetList");
+                var goodsList = getSessionStorage("goodsList");
+
+                //表单赋初值
+                if (edit) {
+                    $(".deptName").val(renderItemName(deptList, edit.deptId));
+                    $(".goodsName").val(renderItemName(goodsList, edit.goodsId));
+                    $(".goodsSpec").val(renderItem(goodsList, edit.goodsId, 'spec'));
+                    form.render();
+                }
+
+                //库存列表
+                var tableIns = table.render({
+                    elem: '#stockRecordList'
+                    , url: contextPath + '/com/getTagStockList' + getAccessTokenUrl() //数据接口
+                    , where: { deptId: edit.deptId, goodsId: edit.goodsId }
+                    , id: 'stockRecordTable'
+                    , page: true //开启分页
+                    , height: "full-105"
+                    , limit: 10
+                    , limits: [10, 15, 20]
+                    , even: true
+                    , method: 'GET'   //laui 修改请求方式
+                    , cellMinWidth: 95
+                    , cols: [[ //表头
+                        { field: 'spdCode', title: '唯一码', width: 250, align: "center" }
+                        , { field: 'epc', title: 'EPC', width: 250, align: "center" }
+                        , {
+                            title: '有效期', align: "center", templet: function (d) {
+                                if (d.state1 == 1) {
+                                    return '<a class="layui-btn layui-btn-xs layui-btn-danger">' + d.expireDate + '</a>';
+                                } else if (d.state2 == 1) {
+                                    return '<a class="layui-btn layui-btn-xs layui-btn-warm">' + d.expireDate + '</a>';
+                                } else {
+                                    return d.expireDate;
+                                }
+                            }
+                        }
+                        , { field: 'batchNo', title: '批次号', align: "center" }
+                        , {
+                            title: '所在柜体', align: "center", templet: function (d) {
+                                return renderItemName(cabinetList, d.cabinetId);
+                            }
+                        }
+                        , { field: 'createDate', title: '最后入柜时间', align: "center" }
+                    ]]
+                });
+            }
+
+        });
+
+    </script>
+</body>
+
+</html>

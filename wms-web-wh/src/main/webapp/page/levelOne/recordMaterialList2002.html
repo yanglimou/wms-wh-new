@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>低值耗材制标</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote quoteBox">
+        <form class="layui-form">
+            <input type="hidden" class="layui-input id" id="totalCount" value="0">
+
+            <div class="layui-input-inline">
+                <input id="orderCreateCode" placeholder="输入制标单号" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-input-inline">
+                <select class="productId" id="productId" lay-search>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" id="dateRange" placeholder="选择时间范围">
+            </div>
+            <div class="layui-input-inline">
+                <select id="print">
+                    <option value="1032">未打印</option>
+                    <option value="1030">已打印</option>
+                    <option value="">选择标签打印状态</option>
+                </select>
+            </div>
+            <div class="layui-inline">
+                <button class="layui-btn search_btn"><i class="layui-icon">&#xe615;</i>查询</button>
+            </div>
+            <div class="layui-inline">
+                <button class="layui-btn layui-btn-primary" type="reset">重置</button>
+            </div>
+        </form>
+    </blockquote>
+
+    <table id="recordMaterialList" lay-filter="recordMaterialList" width="100%"></table>
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+              <button class="layui-btn layui-btn-normal" lay-event="batchPrint"><i class="layui-icon">&#xe66e;</i>选中打印</button>
+              <button class="layui-btn layui-btn-danger" lay-event="allPrint"><i class="layui-icon">&#xe66e;</i>全部打印</button>
+        </div>
+      </script>
+
+    <!-- 操作 -->
+    <script type="text/html" id="recordMaterialListBar">
+            <a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="print"><i class="layui-icon">&#xe66e;</i>打印</a>
+    </script>
+
+    <script type="text/javascript" src="../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'laydate', 'table', 'laytpl'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laydate = layui.laydate,
+                laytpl = layui.laytpl,
+                table = layui.table;
+
+            //默认耗材类型
+            var defalutKind = 3;
+
+            //默认标签打印类型
+            var defaultTagType = 1;
+
+            var employeeList = getSessionStorage("employeeList");
+            var warehouseList = getSessionStorage("warehouseList");
+            var productList = getSessionStorage("productList");
+
+            $(".productId").append(renderSelectOptions(productList, { valueField: "id", textField: "name", selectedValue: null }, "耗材"));
+            form.render('select');
+
+            //执行一个laydate实例
+            laydate.render({
+                elem: '#dateRange' //指定元素
+                , range: true
+            });
+
+            //加载表格数据
+            var tableIns = table.render({
+                elem: '#recordMaterialList'
+                , url: contextPath + '/material/query/getRecordMaterialList' + getAccessTokenUrl()  //数据接口
+                , id: 'recordMaterialTable'
+                , where: { kind: defalutKind, tagType: defaultTagType }
+                , toolbar: '#toolbarDemo'
+                , defaultToolbar: ['filter', 'exports']
+                , page: true //开启分页
+                , height: "full-105"
+                , limit: 15
+                , limits: [10, 15, 20]
+                , even: true
+                , method: 'GET'   //laui 修改请求方式
+                , cellMinWidth: 80
+                , cols: [[ //表头
+                    { type: 'checkbox', fixed: 'left', align: "center" }
+                    , { type: 'numbers', title: '序号' }
+                    , {
+                        field: 'print', title: '打印状态', align: "center", width: 120, templet: function (d) {
+                            if (d.print == 1030) {
+                                return "<i class='layui-icon' style='color:green;margin-right:5px'>&#xe617;</i>已打印";
+                            } else {
+                                return "<i class='layui-icon' style='color:red;margin-right:5px'>&#xe617;</i>未打印";
+                            }
+                        }
+                    }
+                    , {
+                        field: 'destWarehouseId', title: '目标科室', align: "center", templet: function (d) {
+                            return renderItemName(warehouseList, d.destWarehouseId);
+                        }
+                    }
+                    , { field: 'orderCreateCode', title: '制标单号', align: "center" }
+                    , {
+                        field: 'tagType', title: '标签打印类型', width: 120, align: "center", templet: function (d) {
+                            var tagType = renderItem(productList, d.productId, 'tagType');
+
+                            if (tagType == 0) {
+                                return '<a class="layui-btn layui-btn-xs">普通标签</a>';
+                            } else if (tagType == 1) {
+                                return '<a class="layui-btn layui-btn-normal layui-btn-xs">长标签</a>';
+                            }
+                        }
+                    }
+                    , {
+                        field: 'name', title: '耗材品名', align: "center", templet: function (d) {
+                            return renderItemName(productList, d.productId);
+                        }
+                    }
+                    , {
+                        field: 'specNormal', title: '规格', align: "center", templet: function (d) {
+                            return renderItem(productList, d.productId, 'specNormal');
+                        }
+                    }
+                    , { field: 'unitPackage', title: '定数系数', width: 120, align: "center" }
+                    , {
+                        field: 'factoryName', title: '生产商', align: "center", templet: function (d) {
+                            return renderItem(productList, d.productId, 'factoryName');
+                        }
+                    }
+                    , { field: 'batchNo', title: '批次号', align: "center" }
+                    , { field: 'expireDate', title: '有效期', align: "center" }
+                    , { field: 'spdUniqueCode', title: '定数包', width: 120, align: "center" }
+                    , { field: 'createdLocalDtm', title: '制标日期', align: "center" }
+                    , { title: '操作', templet: '#recordMaterialListBar', width: 100, align: "center", fixed: "right" }
+                ]]
+                , done: function (res) {
+                    $("#totalCount").val(res.count);
+                    if (queryFlag == true && res.tagTypeQuantityStr) {
+                        layer.msg(res.tagTypeQuantityStr, { icon: 7, time: 1000, shade: [0.6, '#000', true] });
+                    }
+
+                    queryFlag = false;
+                }
+            });
+
+            table.on('toolbar(recordMaterialList)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'allPrint':
+                        allPrint();
+                        break;
+                    case 'batchPrint':
+                        batchPrint();
+                        break;
+                };
+            });
+
+            table.on('tool(recordMaterialList)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+                switch (obj.event) {
+                    case 'print':
+                        print(data);
+                        break;
+                }
+            });
+
+            var queryFlag = false;
+            //搜索
+            $(".search_btn").on("click", function () {
+                queryFlag = true;
+                table.reload('recordMaterialTable', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        orderCreateCode: $('#orderCreateCode').val(),
+                        productId: $('#productId').val(),
+                        print: $('#print').val(),
+                        dateRange: $('#dateRange').val()
+                    }
+                });
+
+                return false;
+            });
+
+            //全部打印
+            function allPrint() {
+                var totalCount = parseInt($("#totalCount").val());
+                if (totalCount > 500) {
+                    layer.msg("打印标签过多，请缩小打印范围");
+                    return;
+                } else if (totalCount == 0) {
+                    layer.msg("没有待打印的标签");
+                    return;
+                }
+
+                var str = '本次共打印标签【' + $("#totalCount").val() + '】条，是否确认打印？';
+                layer.confirm(str, { icon: 3, title: '提示信息' }, function (index) {
+                    layer.close(index);
+
+                    $.ajax({
+                        url: contextPath + '/material/operate/printRecordMaterialList' + getAccessTokenUrl(),
+                        type: 'post',
+                        dataType: 'json',
+                        data: {
+                            kind: defalutKind,
+                            tagType: defaultTagType,
+                            orderCreateCode: $('#orderCreateCode').val(),
+                            productId: $('#productId').val(),
+                            print: $('#print').val(),
+                            dateRange: $('#dateRange').val()
+                        },
+
+                        success: function (data) {
+                            if (data.code == 0) {
+                                layer.msg("标签打印中");
+                                $('.search_btn').click();
+                            } else {
+                                layer.alert(data.msg);
+                            }
+                        }
+                    });
+                    return false;
+                });
+            }
+
+            //批量打印
+            function batchPrint() {
+                var checkStatus = table.checkStatus('recordMaterialTable'),
+                    data = checkStatus.data;
+                if (data.length > 0) {
+
+                    var str = '本次共打印标签【' + data.length + '】条，是否确认打印？';
+                    layer.confirm(str, { icon: 3, title: '提示信息' }, function (index) {
+                        layer.close(index);
+
+                        //拼接ID
+                        var recordMaterialIds = "";
+                        for (var i in data) {
+                            recordMaterialIds += "," + data[i].id;
+                        }
+
+                        $.ajax({
+                            url: contextPath + '/material/operate/printRecordMaterialListByIds' + getAccessTokenUrl(),
+                            type: 'post',
+                            dataType: 'json',
+                            data: {
+                                kind: defalutKind,
+                                tagType: defaultTagType,
+                                recordMaterialIds: recordMaterialIds.substring(1),
+                            },
+
+                            success: function (data) {
+                                if (data.code == 0) {
+                                    layer.msg("标签打印中");
+                                    $('.search_btn').click();
+                                } else {
+                                    layer.alert(data.msg);
+                                }
+                            }
+                        });
+                        return false;
+                    });
+                } else {
+                    layer.msg("没有待打印的标签");
+                    return;
+                }
+            }
+
+            //单个打印
+            function print(data) {
+                var str = '打印定数包【' + data.spdUniqueCode + '】，是否确认打印？';
+                layer.confirm(str, { icon: 3, title: '提示信息' }, function (index) {
+                    layer.close(index);
+                    $.ajax({
+                        url: contextPath + '/material/operate/printRecordMaterialListByIds' + getAccessTokenUrl(),
+                        type: 'post',
+                        dataType: 'json',
+                        data: {
+                            kind: defalutKind,
+                            tagType: defaultTagType,
+                            recordMaterialIds: data.id
+                        },
+
+                        success: function (data) {
+                            if (data.code == 0) {
+                                layer.msg("标签打印中");
+                                $('.search_btn').click();
+                            } else {
+                                layer.alert(data.msg);
+                            }
+                        }
+                    });
+                    return false;
+                });
+            }
+
+            //执行条件搜索
+            $('.search_btn').click();
+        });
+
+    </script>
+</body>
+
+</html>

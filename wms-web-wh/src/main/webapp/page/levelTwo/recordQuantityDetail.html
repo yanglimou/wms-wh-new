@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>出入柜详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote quoteBox">
+        <div class="layui-input-inline">
+            <label class="layui-form-label">柜体名称</label>
+        </div>
+        <div class="layui-input-inline">
+            <input class="layui-input cabinetName">
+        </div>
+        <div class="layui-input-inline">
+            <label class="layui-form-label">操作人</label>
+        </div>
+        <div class="layui-input-inline">
+            <input class="layui-input userName">
+        </div>
+        <div class="layui-input-inline">
+            <label class="layui-form-label">操作时间</label>
+        </div>
+        <div class="layui-input-inline">
+            <input class="layui-input createDate">
+        </div>
+    </blockquote>
+
+    <table id="recordInList" lay-filter="recordInList" width="100%"></table>
+
+    <script type="text/javascript" src="../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'laydate', 'table', 'laytpl', 'flow'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laydate = layui.laydate,
+                laytpl = layui.laytpl,
+                flow = layui.flow,
+                table = layui.table;
+
+            //初始化数据,提供父窗口调用
+            window.initData = function (edit) {
+
+                var deptList = getSessionStorage("deptList");
+                var cabinetList = getSessionStorage("cabinetList");
+                var userList = getSessionStorage("userList");
+                var goodsList = getSessionStorage("goodsList");
+                var manufacturerList = getSessionStorage("manufacturerList");
+
+                //表单赋初值
+                if (edit) {
+                    $(".cabinetName").val(renderItemName(cabinetList, edit.cabinetId));
+                    $(".userName").val(renderItemName(userList, edit.createUserId));
+                    $(".createDate").val(edit.createDate);
+                    form.render();
+                }
+
+                var tableIns = table.render({
+                    elem: '#recordInList'
+                    , url: contextPath + '/com/getTagRecordListByExceptionDescId' + getAccessTokenUrl()  //数据接口
+                    , where: { exceptionDescId: edit.id, type: edit.type }
+                    , id: 'recordInTable'
+                    , page: true //开启分页
+                    , height: "full-105"
+                    , limit: 15
+                    , limits: [10, 15, 20]
+                    , even: true
+                    , method: 'GET'   //laui 修改请求方式
+                    , cellMinWidth: 95
+                    , cols: [[ //表头                        
+                         {
+                            title: '操作类型', align: "center", templet: function (d) {
+                                if (d.recordType == 'tagIn') {
+                                    return '<a class="layui-btn layui-btn-xs">收货</a>';
+                                } else if (d.recordType == 'tagReturn') {
+                                    return '<a class="layui-btn layui-btn-danger layui-btn-xs">退还</a>';
+                                } else if (d.recordType == 'tagOut') {
+                                    return '<a class="layui-btn layui-btn-warm layui-btn-xs">领用</a>';
+                                }
+                            }
+                        }
+                        , { field: 'spdCode', title: '唯一码', width: 250, align: "center" }
+                        , { field: 'expireDate', title: '有效期', width: 120, align: "center" }
+                        , { field: 'batchNo', title: '批次号', width: 120, align: "center" }
+                        , {
+                            title: '耗材名称', align: "center", width: 200, templet: function (d) {
+                                return renderItemName(goodsList, d.goodsId);
+                            }
+                        }
+                        , {
+                            title: '规格', align: "center", width: 200, templet: function (d) {
+                                return renderItem(goodsList, d.goodsId, 'spec');
+                            }
+                        }
+                        , {
+                            title: '厂家名称', align: "center", width: 200, templet: function (d) {
+                                var manufacturerId = renderItem(goodsList, d.goodsId, 'manufacturerId');
+                                return renderItem(manufacturerList, manufacturerId, 'name');
+                            }
+                        }
+                        , {
+                            title: '确认方式', align: "center", templet: function (d) {
+                                if (d.confirmed == 'true') {
+                                    return '手动';
+                                } else if (d.confirmed == 'false') {
+                                    return '自动';
+                                }
+                            }
+                        }
+                    ]]
+                });
+            }
+
+        });
+
+    </script>
+</body>
+
+</html>

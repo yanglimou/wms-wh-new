@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>出入柜列表--layui后台管理模板 2.0</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+    <link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+    <blockquote class="layui-elem-quote quoteBox">
+        <form class="layui-form">
+
+            <div class="layui-input-inline">
+                <select class="deptId" id="deptId" lay-search>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <select class="goodsId" id="goodsId" lay-search>
+                </select>
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" id="dateRange" placeholder="选择时间范围">
+            </div>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" id="spdCode" placeholder="唯一码" style="width: 200px;">
+            </div>
+
+            <div class="layui-input-inline">
+                <input type="radio" name="type" value="tagIn" title="收货">
+                <input type="radio" name="type" value="tagReturn" title="退还">
+                <input type="radio" name="type" value="tagOut" title="领用" checked>
+            </div>
+
+            <div class="layui-input-inline">
+                <a class="layui-btn search_btn" data-type="reload"><i class="layui-icon">&#xe615;</i>查询</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-normal exportAll_btn"><i class="layui-icon">&#xe601;</i>批量导出</a>
+            </div>
+        </form>
+    </blockquote>
+
+    <table id="recordInList" lay-filter="recordInList"></table>
+
+    <script type="text/html" id="recordInListBar">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="view"><i class="layui-icon">&#xe634;</i>预览</a>
+    </script>
+
+    <script type="text/javascript" src="../../layui/layui.js"></script>
+    <script type="text/javascript" src="../../js/common.js"></script>
+    <script>
+        layui.use(['form', 'layer', 'laydate', 'table', 'laytpl'], function () {
+            var form = layui.form,
+                layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery,
+                laydate = layui.laydate,
+                laytpl = layui.laytpl,
+                table = layui.table;
+
+            //执行一个laydate实例
+            laydate.render({
+                elem: '#dateRange' //指定元素
+                , range: true
+                , value: getDateRange()
+                , isInitValue: true
+            });
+            var userList = getSessionStorage("userList");
+            var deptList = getSessionStorage("deptList");
+            var cabinetList = getSessionStorage("cabinetList");
+            var goodsList = getSessionStorage("goodsList");
+            var manufacturerList = getSessionStorage("manufacturerList");
+
+            $(".deptId").append(renderSelectOptions(deptList, { valueField: "id", textField: "name", selectedValue: null }, "科室"));
+            $(".goodsId").append(renderSelectOptions(goodsList, { valueField: "id", textField: "name", selectedValue: null, captionField: "spec" }, "耗材"));
+            //医护人员只能查询本科室
+            var employee = getCurrentEmployee();
+            var deptId = employee.deptId;
+            if (deptId !== null && deptId !== undefined && deptId !== '') {
+                $(".deptId").val(deptId);
+                $(".deptId").attr('disabled', 'true');
+            }
+            form.render('select');
+
+            //入库列表
+            var tableIns = table.render({
+                elem: '#recordInList'
+                , url: contextPath + '/com/getTagRecordList' + getAccessTokenUrl()  //数据接口
+                , where: { deptId: $('.deptId').val(), dateRange: $('#dateRange').val() }
+                , id: 'recordInTable'
+                , page: true //开启分页
+                , height: "full-105"
+                , limit: 15
+                , limits: [10, 15, 20]
+                , even: true
+                , method: 'GET'   //laui 修改请求方式
+                , cellMinWidth: 95
+                , cols: [[ //表头
+                    { type: 'checkbox', fixed: 'left', align: "center" }
+                    , {
+                        title: '操作类型', align: "center", templet: function (d) {
+                            if (d.recordType == 'tagIn') {
+                                return '<a class="layui-btn layui-btn-xs">收货</a>';
+                            } else if (d.recordType == 'tagReturn') {
+                                return '<a class="layui-btn layui-btn-danger layui-btn-xs">退还</a>';
+                            } else if (d.recordType == 'tagOut') {
+                                return '<a class="layui-btn layui-btn-warm layui-btn-xs">领用</a>';
+                            }
+                        }
+                    }
+                    , { field: 'spdCode', title: '唯一码', width: 200, align: "center" }
+                    , { field: 'expireDate', title: '有效期', width: 150, align: "center" }
+                    , { field: 'batchNo', title: '批次号', width: 120, align: "center" }
+                    , {
+                        title: '科室名称', align: "center", width: 100, templet: function (d) {
+                            var deptId = renderItem(cabinetList, d.cabinetId, 'deptId');
+                            return renderItemName(deptList, deptId);
+                        }
+                    }
+                    , {
+                        title: '柜体名称', align: "center", width: 100, templet: function (d) {
+                            return renderItemName(cabinetList, d.cabinetId);
+                        }
+                    }
+                    , {
+                        title: '耗材名称', align: "center", width: 200, templet: function (d) {
+                            return renderItemName(goodsList, d.goodsId);
+                        }
+                    }
+                    , {
+                        title: '规格', align: "center", width: 200, templet: function (d) {
+                            return renderItem(goodsList, d.goodsId, 'spec');
+                        }
+                    }
+                    , {
+                        title: '单位', align: "center", width: 100, templet: function (d) {
+                            return renderItem(goodsList, d.goodsId, 'unit');
+                        }
+                    }
+                    , {
+                        title: '厂家名称', align: "center", width: 200, templet: function (d) {
+                            var manufacturerId = renderItem(goodsList, d.goodsId, 'manufacturerId');
+                            return renderItem(manufacturerList, manufacturerId, 'name');
+                        }
+                    }
+                    , {
+                        title: '操作人', align: "center", templet: function (d) {
+                            return renderItemName(userList, d.createUserId);
+                        }
+                    }
+                    , { field: 'createDate', title: '操作时间', width: 200, align: "center" }
+                    , {
+                        title: '确认方式', align: "center", templet: function (d) {
+                            if (d.confirmed == 'true') {
+                                return '手动';
+                            } else if (d.confirmed == 'false') {
+                                return '自动';
+                            }
+                        }
+                    }
+                    , {
+                        title: '上传SPD', width: 100, align: "center", templet: function (d) {
+                            if (d.upload == 'success') {
+                                return "<i class='layui-icon' style='color:green;margin-right:5px'>&#xe617;</i>已上传";
+                            } else if (d.upload == 'failed') {
+                                return "<i class='layui-icon' style='color:red;margin-right:5px'>&#xe617;</i>未上传";
+                            }
+                        }
+                    }
+                    , { title: '操作', templet: '#recordInListBar', width: 100, fixed: "right", align: "center" }
+                ]]
+            });
+
+            //搜索
+            $(".search_btn").on("click", function () {
+
+                //执行重载
+                table.reload('recordInTable', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    , where: {
+                        deptId: $('.deptId').val()
+                        , goodsId: $('.goodsId').val()
+                        , dateRange: $('#dateRange').val()
+                        , spdCode: $('#spdCode').val()
+                        , type: $('input[name="type"]:checked').val()
+                    }
+                });
+            });
+
+            //导出
+            $(".exportAll_btn").on("click", function () {
+                if ($(".deptId").val()) {
+                    location.href = contextPath + "/file/downloadTagInOutRecordList" + getAccessTokenUrl()
+                        + "&deptId=" + $(".deptId").val()
+                        + "&goodsId=" + $('.goodsId').val()
+                        + "&dateRange=" + $('#dateRange').val()
+                        + "&spdCode=" + $('#spdCode').val()
+                        + "&type=" + $('input[name="type"]:checked').val();
+
+                } else {
+                    layer.msg("请先选择科室");
+                }
+            });
+
+            //监听工具条
+            table.on('tool(recordInList)', function (obj) { //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+                var data = obj.data; //获得当前行数据
+                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+                var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+                switch (obj.event) {
+                    case 'view':
+                        var photos = [];
+                        var newPhoto = {
+                            "src": contextPath + '/file/getRecordImage' + getAccessTokenUrl()
+                                + '&cabinetId=' + data.cabinetId + '&createDate=' + data.createDate
+                        };
+                        photos.push(newPhoto);
+
+                        parent.showImg("入库图片预览", photos);
+                        break;
+
+                }
+            });
+
+        });
+
+    </script>
+</body>
+
+</html>

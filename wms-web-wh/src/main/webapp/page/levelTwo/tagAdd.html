@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>生成测试标签</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<link rel="stylesheet" href="../../layui/css/layui.css" media="all" />
+	<link rel="stylesheet" href="../../css/public.css" media="all" />
+</head>
+
+<body class="childrenBody">
+	<form class="layui-form" style="width:80%;">
+
+		<input type="hidden" class="layui-input userId">
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">所在科室</label>
+			<div class="layui-input-block">
+				<select class="deptId" lay-filter="deptId" lay-verify="required" lay-search>
+				</select>
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">起始编号</label>
+			<div class="layui-input-block">
+				<input type="text" class="layui-input index" lay-verify="required" placeholder="请输入起始编号">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">生成数量</label>
+			<div class="layui-input-block">
+				<input type="text" class="layui-input count" lay-verify="required" placeholder="请输入生成数量">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">批次号</label>
+			<div class="layui-input-block">
+				<input type="text" class="layui-input batchNo" lay-verify="required" placeholder="请输入批次号">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit="" lay-filter="addEmployee">立即提交</button>
+				<button type="reset" class="layui-btn layui-btn-primary">重置</button>
+			</div>
+		</div>
+	</form>
+	<script type="text/javascript" src="../../layui/layui.all.js"></script>
+	<script type="text/javascript" src="../../js/common.js"></script>
+
+	<script type="text/javascript">
+		layui.use(['form', 'layer', 'transfer'], function () {
+			var form = layui.form
+			layer = parent.layer === undefined ? layui.layer : top.layer,
+				transfer = layui.transfer,
+				$ = layui.jquery;
+
+			form.on("submit(addEmployee)", function (data) {
+				$.ajax({
+					url: contextPath + '/com/generateTestData' + getAccessTokenUrl(),
+					type: 'post',
+					dataType: 'json',
+					data: {
+						deptId: $(".deptId").val(),
+						index: $(".index").val(),
+						count: $(".count").val(),
+						batchNo: $(".batchNo").val(),
+					},
+					success: function (data) {
+						if (data.code == 0) {
+							layer.msg("标签信息生成成功！");
+							//刷新父页面
+							parent.tagListTools.func1();
+
+							var index = parent.layer.getFrameIndex(window.name);
+							parent.layer.close(index);//关闭当前页
+						} else {
+							layer.alert(data.msg);
+						}
+					}
+				});
+				return false;
+			})
+
+			var deptList = getSessionStorage("deptList");
+
+			//初始化数据,提供父窗口调用
+			window.initData = function (edit) {
+				$(".deptId").append(renderSelectOptions(deptList, { valueField: "id", textField: "name", selectedValue: null }, "科室"));
+				form.render('select');
+			}
+		})
+	</script>
+</body>
+
+</html>
