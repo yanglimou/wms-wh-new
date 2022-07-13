@@ -20,7 +20,6 @@ import com.tsj.common.constant.FileConstant;
 import com.tsj.common.druid.DruidConfig;
 import com.tsj.common.log.LogBackLogFactory;
 import com.tsj.common.threadpool.ThreadPoolPlugin;
-import com.tsj.domain.model.Dept;
 import com.tsj.domain.model._MappingKit;
 import com.tsj.service.CacheService;
 import com.tsj.service.interceptor.AuthInterceptor;
@@ -34,7 +33,6 @@ import com.tsj.web.controller.api.ApiComController;
 import com.tsj.web.controller.api.ApiSysController;
 import com.tsj.web.controller.api.DevelopmentToolsController;
 import net.dreamlu.event.EventPlugin;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * @className: CoreConfig
@@ -93,6 +91,7 @@ public class MyConfig extends JFinalConfig {
         me.add("/sys", SysController.class);
         me.add("/file", FileController.class);
         me.add("/print", PrintController.class);
+        me.add("/printer", PrinterController.class);
 
         me.add("/api/sys", ApiSysController.class);
         me.add("/api/com", ApiComController.class);
@@ -176,6 +175,7 @@ public class MyConfig extends JFinalConfig {
 
 
     private TcpServer tcpServer;
+
     @Override
     public void onStart() {
         super.onStart();
