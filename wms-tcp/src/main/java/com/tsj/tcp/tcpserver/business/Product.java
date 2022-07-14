@@ -76,7 +76,7 @@ public class Product {
         jsonObject.getJSONArray("data").stream().map(row -> (JSONObject) row).forEach(row -> {
             String location = row.getString("location");
             //获取数据库集合
-            Set<String> epcSetOld = Db.find("select epc from location  WHERE cabinet=? and location=?", cabinet, location).stream().map(record -> record.getStr("epc")).collect(Collectors.toSet());
+            Set<String> epcSetOld = Db.find("select epc from com_location  WHERE cabinet=? and location=?", cabinet, location).stream().map(record -> record.getStr("epc")).collect(Collectors.toSet());
             //获取当前集合
             Set<String> epcSetNow = row.getJSONArray("data").stream().map(epc -> (String) epc).collect(Collectors.toSet());
             //获取要存的 epcSetNow-epcSetOld
@@ -98,7 +98,7 @@ public class Product {
                 Location locationModel = new Location().setEpc(epc).setLocation(location).setCabinet(cabinet);
                 locationModel.save();
             } else {
-                Db.delete("delete from location where epc=? and location=? and cabinet=?", epc, location, cabinet);
+                Db.delete("delete from com_location where epc=? and location=? and cabinet=?", epc, location, cabinet);
             }
             Record record = Db.findFirst("select a.epc,a.batchNo,a.expireDate,TIMESTAMPDIFF(DAY,NOW(),a.expireDate) as lastDay,b.name,b.spec,c.`name` manufacturerName from com_tag a LEFT JOIN base_goods b on a.goodsId=b.id LEFT JOIN base_manufacturer c on b.manufacturerId=c.id where a.epc= ?", epc);
             log.debug("record:{}", record);

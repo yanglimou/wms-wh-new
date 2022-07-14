@@ -115,7 +115,7 @@ public class Total {
         log.debug("耗材统计");
         String cabinet = jsonObject.getString("code");//耗材柜编号
         // 1. 删除耗材柜的所有位置信息
-        Db.delete("delete from location WHERE cabinet=?", cabinet);
+        Db.delete("delete from com_location WHERE cabinet=?", cabinet);
         JSONObject response = new JSONObject();
         response.put("order", "total");
         response.put("number", jsonObject.getString("number"));
