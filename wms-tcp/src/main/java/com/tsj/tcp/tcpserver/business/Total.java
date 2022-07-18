@@ -1,5 +1,6 @@
 package com.tsj.tcp.tcpserver.business;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
@@ -9,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class Total {
@@ -120,45 +123,44 @@ public class Total {
         response.put("order", "total");
         response.put("number", jsonObject.getString("number"));
         response.put("message", "0");
-//        JSONObject dataResponse = new JSONObject();
         List<JSONObject> dataResponse = new ArrayList();
-        jsonObject.getJSONArray("data").stream().map(row -> (JSONObject) row).forEach(row -> {
-            JSONObject rowResponse = new JSONObject();
-            String location = row.getString("location");
-            rowResponse.put("location", location);
-            List<JSONObject> jxq = new ArrayList<>();
-            List<JSONObject> qt = new ArrayList<>();
-            row.getJSONArray("data").stream().map(epc -> (String) epc).forEach(epc -> {
-                log.debug("{},{},{}", cabinet, location, epc);
-                // 2. 添加耗材柜的所有位置信息
-                Location locationModel = new Location().setCabinet(cabinet).setLocation(location).setEpc(epc);
-                log.debug("locationModel:{}", locationModel.toJson());
-                locationModel.save();
-                // 3. 查询耗材相关信息
-                Record record = Db.findFirst("select a.epc,a.batchNo,a.expireDate,TIMESTAMPDIFF(DAY,NOW(),a.expireDate) as lastDay,b.name,b.spec,c.`name` manufacturerName from com_tag a LEFT JOIN base_goods b on a.goodsId=b.id LEFT JOIN base_manufacturer c on b.manufacturerId=c.id where a.epc= ?", epc);
-                log.debug("record:{}", record);
-                // 4. 组织报文返回
-                JSONObject goodsResponse = new JSONObject();
-                goodsResponse.put("pp", record == null ? "" : record.getStr("manufacturerName"));
-                goodsResponse.put("mc", record == null ? "" : record.getStr("name"));
-                goodsResponse.put("gg", record == null ? "" : record.getStr("spec"));
-                goodsResponse.put("xqpc", record == null ? "" : record.getStr("batchNo"));
-                goodsResponse.put("yxrq", record == null ? "" : record.getStr("expireDate"));
-                goodsResponse.put("syts", record == null ? "" : record.getStr("lastDay"));
-                goodsResponse.put("location", location);
-                goodsResponse.put("operation", "");
-                if (record != null && record.getInt("lastDay") >= 0 && record.getInt("lastDay") <= 60) {
-                    jxq.add(goodsResponse);
-                } else {
-                    qt.add(goodsResponse);
-                }
-            });
-            rowResponse.put("jxq", jxq);
-            rowResponse.put("qt", qt);
-            dataResponse.add(rowResponse);
+        Set<String> epcSet = jsonObject.getJSONArray("data").stream().map(row -> (JSONObject) row).flatMap(row -> row.getJSONArray("data").stream().map(epc -> (String) epc)).collect(Collectors.toSet());
+        log.debug("epcSet : {}", JSON.toJSONString(epcSet));
+        JSONObject rowResponse = new JSONObject();
+        rowResponse.put("location", "1");
+        List<JSONObject> jxq = new ArrayList<>();
+        List<JSONObject> qt = new ArrayList<>();
+        List<Location> locationList = new ArrayList<>();
+        epcSet.forEach(epc -> {
+            // 3. 查询耗材相关信息
+            Record record = Db.findFirst("select a.epc,a.batchNo,a.expireDate,TIMESTAMPDIFF(DAY,NOW(),a.expireDate) as lastDay,b.name,b.spec,c.`name` manufacturerName from com_tag a LEFT JOIN base_goods b on a.goodsId=b.id LEFT JOIN base_manufacturer c on b.manufacturerId=c.id where a.epc= ?", epc);
+            log.debug("record:{}", record);
+            if (record == null) return;
+            // 4. 组织报文返回
+            JSONObject goodsResponse = new JSONObject();
+            goodsResponse.put("pp", record == null ? "" : record.getStr("manufacturerName"));
+            goodsResponse.put("mc", record == null ? "" : record.getStr("name"));
+            goodsResponse.put("gg", record == null ? "" : record.getStr("spec"));
+            goodsResponse.put("xqpc", record == null ? "" : record.getStr("batchNo"));
+            goodsResponse.put("yxrq", record == null ? "" : record.getStr("expireDate"));
+            goodsResponse.put("syts", record == null ? "" : record.getStr("lastDay"));
+            goodsResponse.put("location", "1");
+            goodsResponse.put("operation", "");
+            if (record != null && record.getInt("lastDay") >= 0 && record.getInt("lastDay") <= 60) {
+                jxq.add(goodsResponse);
+            } else {
+                qt.add(goodsResponse);
+            }
+            // 保存数据库
+            Location locationModel = new Location().setCabinet(cabinet).setEpc(epc);
+            locationList.add(locationModel);
         });
+        rowResponse.put("jxq", jxq);
+        rowResponse.put("qt", qt);
+        dataResponse.add(rowResponse);
         response.put("data", dataResponse);
         String responseString = response.toJSONString();
+        Db.batchSave(locationList, 5000);
         log.debug("耗材统计响应报文：{}", responseString);
         channelHandlerContext.writeAndFlush(responseString);
     }

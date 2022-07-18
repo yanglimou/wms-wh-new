@@ -33,6 +33,9 @@ public class TcpServerHandler extends SimpleChannelInboundHandler<String> {
             case "product":
                 Product.run(channelHandlerContext, jsonObject);
                 break;
+            case "patientproduct":
+                PatientProduct.run(channelHandlerContext, jsonObject);
+                break;
             case "total":
                 Total.run(channelHandlerContext, jsonObject);
                 break;

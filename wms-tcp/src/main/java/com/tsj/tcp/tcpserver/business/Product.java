@@ -3,7 +3,6 @@ package com.tsj.tcp.tcpserver.business;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-import com.tsj.domain.model.Location;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -73,35 +72,26 @@ public class Product {
         response.put("number", jsonObject.getString("number"));
         response.put("message", "0");
         List<JSONObject> dataResponse = new ArrayList();
-        jsonObject.getJSONArray("data").stream().map(row -> (JSONObject) row).forEach(row -> {
-            String location = row.getString("location");
-            //获取数据库集合
-            Set<String> epcSetOld = Db.find("select epc from com_location  WHERE cabinet=? and location=?", cabinet, location).stream().map(record -> record.getStr("epc")).collect(Collectors.toSet());
-            //获取当前集合
-            Set<String> epcSetNow = row.getJSONArray("data").stream().map(epc -> (String) epc).collect(Collectors.toSet());
-            //获取要存的 epcSetNow-epcSetOld
-            Collection<String> epcNeedAdd = CollectionUtils.subtract(epcSetNow, epcSetOld);
-            handleEpcSet(epcNeedAdd, true, location, cabinet, dataResponse);
-            //获取要取的 epcSetOld-epcSetNow
-            Collection<String> epcNeedRemove = CollectionUtils.subtract(epcSetOld, epcSetNow);
-            handleEpcSet(epcNeedRemove, false, location, cabinet, dataResponse);
-        });
+        Set<String> epcSetNow = jsonObject.getJSONArray("data").stream().map(row -> (JSONObject) row).flatMap(row -> row.getJSONArray("data").stream().map(epc -> (String) epc)).collect(Collectors.toSet());
+        //获取数据库集合
+        Set<String> epcSetOld = Db.find("select epc from com_location  WHERE cabinet=?", cabinet).stream().map(record -> record.getStr("epc")).collect(Collectors.toSet());
+        //获取要存的 epcSetNow-epcSetOld
+        Collection<String> epcNeedAdd = CollectionUtils.subtract(epcSetNow, epcSetOld);
+        handleEpcSet(epcNeedAdd, true, cabinet, dataResponse);
+        //获取要取的 epcSetOld-epcSetNow
+        Collection<String> epcNeedRemove = CollectionUtils.subtract(epcSetOld, epcSetNow);
+        handleEpcSet(epcNeedRemove, false, cabinet, dataResponse);
         response.put("data", dataResponse);
         String responseString = response.toJSONString();
         log.debug("耗材上报响应报文：{}", responseString);
         channelHandlerContext.writeAndFlush(responseString);
     }
 
-    private static void handleEpcSet(Collection<String> epcSet, boolean isAdd, String location, String cabinet, List<JSONObject> dataResponse) {
+    private static void handleEpcSet(Collection<String> epcSet, boolean isAdd, String cabinet, List<JSONObject> dataResponse) {
         epcSet.forEach(epc -> {
-            if (isAdd) {
-                Location locationModel = new Location().setEpc(epc).setLocation(location).setCabinet(cabinet);
-                locationModel.save();
-            } else {
-                Db.delete("delete from com_location where epc=? and location=? and cabinet=?", epc, location, cabinet);
-            }
             Record record = Db.findFirst("select a.epc,a.batchNo,a.expireDate,TIMESTAMPDIFF(DAY,NOW(),a.expireDate) as lastDay,b.name,b.spec,c.`name` manufacturerName from com_tag a LEFT JOIN base_goods b on a.goodsId=b.id LEFT JOIN base_manufacturer c on b.manufacturerId=c.id where a.epc= ?", epc);
             log.debug("record:{}", record);
+            if (record == null) return;
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("pp", record == null ? "" : record.getStr("manufacturerName"));
             jsonObject.put("mc", record == null ? "" : record.getStr("name"));
@@ -109,7 +99,7 @@ public class Product {
             jsonObject.put("xqpc", record == null ? "" : record.getStr("batchNo"));
             jsonObject.put("yxrq", record == null ? "" : record.getStr("expireDate"));
             jsonObject.put("syts", record == null ? "" : record.getStr("lastDay"));
-            jsonObject.put("location", location);
+            jsonObject.put("location", "1");
             jsonObject.put("epc", epc);
             jsonObject.put("operation", isAdd ? "存" : "取");
             dataResponse.add(jsonObject);

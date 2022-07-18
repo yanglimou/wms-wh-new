@@ -34,13 +34,4 @@ public abstract class BaseLocation<M extends BaseLocation<M>> extends Model<M> i
     public String getCabinet() {
         return getStr("cabinet");
     }
-
-    public M setLocation(String location) {
-        set("location", location);
-        return (M) this;
-    }
-
-    public String getLocation() {
-        return getStr("location");
-    }
 }
