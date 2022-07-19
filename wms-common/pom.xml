@@ -134,15 +134,6 @@
             <artifactId>lombok</artifactId>
             <version>1.18.20</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.zebra/zsdk-api -->
-        <dependency>
-            <groupId>com.zebra</groupId>
-            <artifactId>zsdk-api</artifactId>
-            <version>2.14.5198</version>
-        </dependency>
-
-
-
     </dependencies>
 
 

@@ -5,8 +5,16 @@ import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.tsj.domain.model.Printer;
 import com.tsj.service.common.MyService;
-import com.zebra.sdk.comm.Connection;
-import com.zebra.sdk.comm.TcpConnection;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.string.StringEncoder;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,9 +50,6 @@ public class PrintService extends MyService {
 
     public List<Printer> getPrinter() {
         return Printer.dao.findAll();
-//        return Kv.create()
-//                .set("high", Arrays.asList(Kv.by("clientId", "2").set("highFlag", "1")))
-//                .set("low", Arrays.asList());
     }
 
     public boolean print(String printId, String zpl) {
@@ -54,10 +59,7 @@ public class PrintService extends MyService {
         String port = printer.getPort();
         log.debug("printId:{},zpl:{},ip:{},port:{}", printId, zpl, ip, port);
         try {
-            Connection printerConnection = new TcpConnection(ip, Integer.parseInt(port));
-            printerConnection.open();
-            printerConnection.write(zpl.getBytes());
-            printerConnection.close();
+            send(ip, Integer.parseInt(port), zpl);
             return true;
         } catch (Exception e) {
             log.error("print error", e);
@@ -65,26 +67,35 @@ public class PrintService extends MyService {
         return false;
     }
 
+    public void send(String ip, int port, String message) throws InterruptedException {
+        NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            log.debug("连接打印机，ip:{},port:{}", ip, port);
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(workerGroup).channel(NioSocketChannel.class).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 1000).handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel socketChannel) throws Exception {
+                    ChannelPipeline pipeline = socketChannel.pipeline();
+                    pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect(ip, port).sync();
+            log.debug("打印机连接成功");
+            channelFuture.channel().writeAndFlush(message).sync();
+            log.debug("报文发送成功");
+            channelFuture.channel().close();
+            channelFuture.channel().closeFuture().sync();
+            log.debug("断开打印机");
+        } finally {
+            workerGroup.shutdownGracefully();
+        }
+    }
+
     public String getZpl(String name, String spec, String manufacturerName, String lotNo, String expireDate, String spdCode, String epc) {
         String[] nameTowLine = getTowLine(name);
         String[] specTowLine = getTowLine(spec);
         String[] manufacturerNameTowLine = getTowLine(manufacturerName);
-        String template = "^XA\n" +
-                "^CI28\n" +
-                "^CWA,E:SIMSUN.FNT\n" +
-                "^FO100,250^AAN,50,28^FD" + nameTowLine[0] + "^FS\n" +
-                "^FO100,300^AAN,50,28^FD" + nameTowLine[1] + "^FS\n" +
-                "^FO100,350^AAN,50,28^FD" + specTowLine[0] + "^FS\n" +
-                "^FO100,400^AAN,50,28^FD" + specTowLine[1] + "^FS\n" +
-                "^FO100,450^AAN,50,28^FD" + spdCode + "^FS\n" +
-                "^FO100,500^AAN,50,28^FD" + lotNo + "^FS\n" +
-                "^FO100,550^AAN,50,28^FD" + expireDate + "^FS\n" +
-                "^FO100,600^AAN,50,28^FD" + manufacturerNameTowLine[0] + "^FS\n" +
-                "^FO100,650^AAN,50,28^FD" + manufacturerNameTowLine[1] + "^FS\n" +
-                "^BY2,2,100\n" +
-                "^FO100,700^BC^FD" + spdCode + "^FS\n" +
-                "^RFW,H,2,12,1^FD" + epc + "^FS" +
-                "^XZ";
+        String template = "^XA\n" + "^CI28\n" + "^CWA,E:SIMSUN.FNT\n" + "^FO100,250^AAN,50,28^FD" + nameTowLine[0] + "^FS\n" + "^FO100,300^AAN,50,28^FD" + nameTowLine[1] + "^FS\n" + "^FO100,350^AAN,50,28^FD" + specTowLine[0] + "^FS\n" + "^FO100,400^AAN,50,28^FD" + specTowLine[1] + "^FS\n" + "^FO100,450^AAN,50,28^FD" + spdCode + "^FS\n" + "^FO100,500^AAN,50,28^FD" + lotNo + "^FS\n" + "^FO100,550^AAN,50,28^FD" + expireDate + "^FS\n" + "^FO100,600^AAN,50,28^FD" + manufacturerNameTowLine[0] + "^FS\n" + "^FO100,650^AAN,50,28^FD" + manufacturerNameTowLine[1] + "^FS\n" + "^BY2,2,100\n" + "^FO100,700^BC^FD" + spdCode + "^FS\n" + "^RFW,H,2,12,1^FD" + epc + "^FS" + "^XZ";
         return template;
     }
 
